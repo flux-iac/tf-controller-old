@@ -85,7 +85,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
           file: ./runner-base.Dockerfile
-          platforms: linux/amd64 # ,linux/arm64 #,linux/arm/v7
+          platforms: linux/amd64,linux/arm64 #,linux/arm/v7
           tags: |
             ghcr.io/${{ env.OWNER_NAME }}/tf-runner:${{ steps.prep.outputs.VERSION }}-base
           labels: |
@@ -174,7 +174,10 @@ jobs:
           COSIGN_EXPERIMENTAL: 1
         run: |
           cosign sign --yes ghcr.io/${{ env.OWNER_NAME }}/${{ env.CONTROLLER }}:${{ steps.prep.outputs.VERSION }}
+          cosign sign --yes ghcr.io/${{ env.OWNER_NAME }}/tf-runner:${{ steps.prep.outputs.VERSION }}-base
           cosign sign --yes ghcr.io/${{ env.OWNER_NAME }}/tf-runner:${{ steps.prep.outputs.VERSION }}
+          cosign sign --yes ghcr.io/${{ env.OWNER_NAME }}/tf-runner-azure:${{ steps.prep.outputs.VERSION }}
+          cosign sign --yes ghcr.io/${{ env.OWNER_NAME }}/branch-planner:${{ steps.prep.outputs.VERSION }}
       - name: Generate release manifests
         if: startsWith(github.ref, 'refs/tags/v')
         run: |

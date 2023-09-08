@@ -1,9 +1,11 @@
 
+OWNER_NAME ?= weaveworks
+
 # Image URL to use all building/pushing image targets
-MANAGER_IMG ?= ghcr.io/weaveworks/tf-controller
-RUNNER_IMG  ?= ghcr.io/weaveworks/tf-runner
-RUNNER_AZURE_IMAGE ?= ghcr.io/weaveworks/tf-runner-azure
-BRANCH_PLANNER_IMAGE ?= ghcr.io/weaveworks/branch-planner
+MANAGER_IMG ?= ghcr.io/$(OWNER_NAME)/tf-controller
+RUNNER_IMG  ?= ghcr.io/$(OWNER_NAME)/tf-runner
+RUNNER_AZURE_IMAGE ?= ghcr.io/$(OWNER_NAME)/tf-runner-azure
+BRANCH_PLANNER_IMAGE ?= ghcr.io/$(OWNER_NAME)/branch-planner
 TAG ?= latest
 BUILD_SHA ?= $(shell git rev-parse --short HEAD)
 BUILD_VERSION ?= $(shell git describe --tags $$(git rev-list --tags --max-count=1))

@@ -8,6 +8,7 @@ on:
     - cron: '18 10 * * 3'
 
 permissions:
+  actions: read
   contents: read # for actions/checkout to fetch code
   security-events: write # for codeQL to write security events
 

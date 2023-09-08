@@ -7,6 +7,9 @@ permissions:
   id-token: write # needed for keyless signing
   packages: write # needed for ghcr access
 
+env:
+  OWNER_NAME: ${{ github.repository_owner }}
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -27,4 +30,4 @@ jobs:
           VERSION=$(yq e '.version' charts/tf-controller/Chart.yaml)
           mkdir helm-release
           helm package charts/tf-controller/ -d helm-release
-          helm push helm-release/tf-controller-${VERSION}.tgz oci://ghcr.io/weaveworks/charts
+          helm push helm-release/tf-controller-${VERSION}.tgz oci://ghcr.io/${{ env.OWNER_NAME }}/charts

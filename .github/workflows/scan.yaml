@@ -11,6 +11,10 @@ permissions:
   contents: read # for actions/checkout to fetch code
   security-events: write # for codeQL to write security events
 
+env:
+  OWNER_NAME: ${{ github.repository_owner }}
+  CONTROLLER: ${{ github.event.repository.name }}
+
 jobs:
   fossa:
     name: FOSSA
@@ -51,7 +55,7 @@ jobs:
       - name: Run Trivy vulnerability scanner on controller image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'ghcr.io/weaveworks/tf-controller:latest'
+          image-ref: 'ghcr.io/${{ env.OWNER_NAME }}/tf-controller:latest'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
@@ -60,7 +64,7 @@ jobs:
       - name: Run Trivy vulnerability scanner on runner image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'ghcr.io/weaveworks/tf-runner:latest'
+          image-ref: 'ghcr.io/${{ env.OWNER_NAME }}/tf-runner:latest'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
@@ -70,7 +74,7 @@ jobs:
       - name: Run Trivy vulnerability scanner on runner image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'ghcr.io/weaveworks/tf-runner-azure:latest'
+          image-ref: 'ghcr.io/${{ env.OWNER_NAME }}/tf-runner-azure:latest'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
@@ -80,7 +84,7 @@ jobs:
       - name: Run Trivy vulnerability scanner on planner image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'ghcr.io/weaveworks/branch-planner:latest'
+          image-ref: 'ghcr.io/${{ env.OWNER_NAME }}/branch-planner:latest'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true

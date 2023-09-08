@@ -16,6 +16,7 @@ permissions:
   packages: write # needed for ghcr access
 
 env:
+  OWNER_NAME: ${{ github.repository_owner }}
   CONTROLLER: ${{ github.event.repository.name }}
 
 jobs:
@@ -68,8 +69,8 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64 #,linux/arm/v7
           tags: |
-            ghcr.io/weaveworks/${{ env.CONTROLLER }}:${{ steps.prep.outputs.VERSION }}
-            ghcr.io/weaveworks/${{ env.CONTROLLER }}:latest
+            ghcr.io/${{ env.OWNER_NAME }}/${{ env.CONTROLLER }}:${{ steps.prep.outputs.VERSION }}
+            ghcr.io/${{ env.OWNER_NAME }}/${{ env.CONTROLLER }}:latest
           labels: |
             org.opencontainers.image.title=${{ github.event.repository.name }}
             org.opencontainers.image.description=${{ github.event.repository.description }}
@@ -87,8 +88,8 @@ jobs:
           file: ./runner.Dockerfile
           platforms: linux/amd64,linux/arm64 #,linux/arm/v7
           tags: |
-            ghcr.io/weaveworks/tf-runner:${{ steps.prep.outputs.VERSION }}
-            ghcr.io/weaveworks/tf-runner:latest
+            ghcr.io/${{ env.OWNER_NAME }}/tf-runner:${{ steps.prep.outputs.VERSION }}
+            ghcr.io/${{ env.OWNER_NAME }}/tf-runner:latest
           labels: |
             org.opencontainers.image.title=${{ github.event.repository.name }}
             org.opencontainers.image.description=${{ github.event.repository.description }}
@@ -106,8 +107,8 @@ jobs:
           file: ./runner-azure.Dockerfile
           platforms: linux/amd64,linux/arm64 #,linux/arm/v7 - azure-cli does not install correctly on 32 bit arm
           tags: |
-            ghcr.io/weaveworks/tf-runner-azure:${{ steps.prep.outputs.VERSION }}
-            ghcr.io/weaveworks/tf-runner-azure:latest
+            ghcr.io/${{ env.OWNER_NAME }}/tf-runner-azure:${{ steps.prep.outputs.VERSION }}
+            ghcr.io/${{ env.OWNER_NAME }}/tf-runner-azure:latest
           labels: |
             org.opencontainers.image.title=${{ github.event.repository.name }}
             org.opencontainers.image.description=${{ github.event.repository.description }}
@@ -125,8 +126,8 @@ jobs:
           file: ./planner.Dockerfile
           platforms: linux/amd64,linux/arm64 #,linux/arm/v7 - azure-cli does not install correctly on 32 bit arm
           tags: |
-            ghcr.io/weaveworks/branch-planner:${{ steps.prep.outputs.VERSION }}
-            ghcr.io/weaveworks/branch-planner:latest
+            ghcr.io/${{ env.OWNER_NAME }}/branch-planner:${{ steps.prep.outputs.VERSION }}
+            ghcr.io/${{ env.OWNER_NAME }}/branch-planner:latest
           labels: |
             org.opencontainers.image.title=${{ github.event.repository.name }}
             org.opencontainers.image.description=${{ github.event.repository.description }}
@@ -136,32 +137,32 @@ jobs:
             org.opencontainers.image.created=${{ steps.prep.outputs.BUILD_DATE }}
       - name: Check images
         run: |
-          docker buildx imagetools inspect ghcr.io/weaveworks/${{ env.CONTROLLER }}:${{ steps.prep.outputs.VERSION }}
-          docker pull ghcr.io/weaveworks/${{ env.CONTROLLER }}:${{ steps.prep.outputs.VERSION }}
+          docker buildx imagetools inspect ghcr.io/${{ env.OWNER_NAME }}/${{ env.CONTROLLER }}:${{ steps.prep.outputs.VERSION }}
+          docker pull ghcr.io/${{ env.OWNER_NAME }}/${{ env.CONTROLLER }}:${{ steps.prep.outputs.VERSION }}
 
-          docker buildx imagetools inspect ghcr.io/weaveworks/tf-runner:${{ steps.prep.outputs.VERSION }}
-          docker pull ghcr.io/weaveworks/tf-runner:${{ steps.prep.outputs.VERSION }}
+          docker buildx imagetools inspect ghcr.io/${{ env.OWNER_NAME }}/tf-runner:${{ steps.prep.outputs.VERSION }}
+          docker pull ghcr.io/${{ env.OWNER_NAME }}/tf-runner:${{ steps.prep.outputs.VERSION }}
 
-          docker buildx imagetools inspect ghcr.io/weaveworks/tf-runner-azure:${{ steps.prep.outputs.VERSION }}
-          docker pull ghcr.io/weaveworks/tf-runner-azure:${{ steps.prep.outputs.VERSION }}
+          docker buildx imagetools inspect ghcr.io/${{ env.OWNER_NAME }}/tf-runner-azure:${{ steps.prep.outputs.VERSION }}
+          docker pull ghcr.io/${{ env.OWNER_NAME }}/tf-runner-azure:${{ steps.prep.outputs.VERSION }}
 
-          docker buildx imagetools inspect ghcr.io/weaveworks/branch-planner:${{ steps.prep.outputs.VERSION }}
-          docker pull ghcr.io/weaveworks/branch-planner:${{ steps.prep.outputs.VERSION }}
+          docker buildx imagetools inspect ghcr.io/${{ env.OWNER_NAME }}/branch-planner:${{ steps.prep.outputs.VERSION }}
+          docker pull ghcr.io/${{ env.OWNER_NAME }}/branch-planner:${{ steps.prep.outputs.VERSION }}
       - name: Sign images
         env:
           COSIGN_EXPERIMENTAL: 1
         run: |
-          cosign sign --yes ghcr.io/weaveworks/${{ env.CONTROLLER }}:${{ steps.prep.outputs.VERSION }}
-          cosign sign --yes ghcr.io/weaveworks/tf-runner:${{ steps.prep.outputs.VERSION }}
+          cosign sign --yes ghcr.io/${{ env.OWNER_NAME }}/${{ env.CONTROLLER }}:${{ steps.prep.outputs.VERSION }}
+          cosign sign --yes ghcr.io/${{ env.OWNER_NAME }}/tf-runner:${{ steps.prep.outputs.VERSION }}
       - name: Generate release manifests
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           mkdir -p config/release
           kustomize build ./config/crd > ./config/release/${{ env.CONTROLLER }}.crds.yaml
           kustomize build ./config/rbac > ./config/release/${{ env.CONTROLLER }}.rbac.yaml
-          kustomize build ./config/manager | yq e '.spec.template.spec.containers[0].env[1].value="ghcr.io/weaveworks/tf-runner:${{ steps.prep.outputs.VERSION }}"' - > ./config/release/${{ env.CONTROLLER }}.deployment.yaml
+          kustomize build ./config/manager | yq e '.spec.template.spec.containers[0].env[1].value="ghcr.io/${{ env.OWNER_NAME }}/tf-runner:${{ steps.prep.outputs.VERSION }}"' - > ./config/release/${{ env.CONTROLLER }}.deployment.yaml
           kustomize build ./config/package > ./config/release/${{ env.CONTROLLER }}.packages.yaml
-          echo '[CHANGELOG](https://github.com/weaveworks/${{ env.CONTROLLER }}/blob/main/CHANGELOG.md)' > ./config/release/notes.md
+          echo '[CHANGELOG](https://github.com/${{ env.OWNER_NAME }}/${{ env.CONTROLLER }}/blob/main/CHANGELOG.md)' > ./config/release/notes.md
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
@@ -175,6 +176,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.TF_CONTROLLER_WEAVEWORKSBOT }}
+          OWNER_NAME: ${{ env.OWNER_NAME }}
       - name: Publish Helm chart
         uses: stefanprodan/helm-gh-pages@v1.4.1
         with:

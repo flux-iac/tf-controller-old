@@ -10,6 +10,7 @@ permissions:
   packages: write # needed for ghcr access
 
 env:
+  OWNER_NAME: ${{ github.repository_owner }}
   CONTROLLER: ${{ github.event.repository.name }}
 
 jobs:
@@ -72,7 +73,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64 #,linux/arm/v7
           tags: |
-            ghcr.io/weaveworks/${{ env.CONTROLLER }}:${{ steps.prep.outputs.VERSION }}
+            ghcr.io/${{ env.OWNER_NAME }}/${{ env.CONTROLLER }}:${{ steps.prep.outputs.VERSION }}
           labels: |
             org.opencontainers.image.title=${{ github.event.repository.name }}
             org.opencontainers.image.description=${{ github.event.repository.description }}
@@ -89,7 +90,7 @@ jobs:
           file: ./runner-base.Dockerfile
           platforms: linux/amd64,linux/arm64 #,linux/arm/v7
           tags: |
-            ghcr.io/weaveworks/tf-runner:${{ steps.prep.outputs.VERSION }}-base
+            ghcr.io/${{ env.OWNER_NAME }}/tf-runner:${{ steps.prep.outputs.VERSION }}-base
           labels: |
             org.opencontainers.image.title=${{ github.event.repository.name }}
             org.opencontainers.image.description=${{ github.event.repository.description }}
@@ -106,9 +107,9 @@ jobs:
           file: ./runner.Dockerfile
           platforms: linux/amd64,linux/arm64 #,linux/arm/v7
           build-args: |
-            BASE_IMAGE=ghcr.io/weaveworks/tf-runner:${{ steps.prep.outputs.VERSION }}-base
+            BASE_IMAGE=ghcr.io/${{ env.OWNER_NAME }}/tf-runner:${{ steps.prep.outputs.VERSION }}-base
           tags: |
-            ghcr.io/weaveworks/tf-runner:${{ steps.prep.outputs.VERSION }}
+            ghcr.io/${{ env.OWNER_NAME }}/tf-runner:${{ steps.prep.outputs.VERSION }}
           labels: |
             org.opencontainers.image.title=${{ github.event.repository.name }}
             org.opencontainers.image.description=${{ github.event.repository.description }}
@@ -125,7 +126,7 @@ jobs:
           file: ./planner.Dockerfile
           platforms: linux/amd64,linux/arm64 #,linux/arm/v7
           tags: |
-            ghcr.io/weaveworks/branch-planner:${{ steps.prep.outputs.VERSION }}
+            ghcr.io/${{ env.OWNER_NAME }}/branch-planner:${{ steps.prep.outputs.VERSION }}
           labels: |
             org.opencontainers.image.title=${{ github.event.repository.name }}
             org.opencontainers.image.description=${{ github.event.repository.description }}

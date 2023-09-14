@@ -16,7 +16,7 @@
     
     
       
-        <title>Use TF-controller with AWS EKS IRSA - Weave GitOps Terraform Controller</title>
+        <title>Using cross-namespace references - Weave GitOps Terraform Controller</title>
       
     
     
@@ -71,7 +71,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#use-tf-controller-with-aws-eks-irsa" class="md-skip">
+        <a href="#using-cross-namespace-references" class="md-skip">
           Skip to content
         </a>
       
@@ -107,7 +107,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Use TF-controller with AWS EKS IRSA
+              Using cross-namespace references
             
           </span>
         </div>
@@ -284,7 +284,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../use_tf_controller/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -424,7 +424,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how_to/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -511,27 +511,51 @@
   
 
 
-<h1 id="use-tf-controller-with-aws-eks-irsa">Use TF-controller with AWS EKS IRSA</h1>
-<p>AWS Elastic Kubernetes Service (EKS) offers IAM Roles for Service Accounts (IRSA) as a mechanism by which to provide
-credentials to Kubernetes pods. This can be used to provide the required AWS credentials to Terraform runners
-for performing plans and applies.</p>
-<p>You can use <code>eksctl</code> to associate an OIDC provider with your EKS cluster, for example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>eksctl<span class="w"> </span>utils<span class="w"> </span>associate-iam-oidc-provider<span class="w"> </span>--cluster<span class="w"> </span>CLUSTER_NAME<span class="w"> </span>--approve
-</code></pre></div>
-<p>Then follow the instructions <a href="https://docs.aws.amazon.com/eks/latest/userguide/create-service-account-iam-policy-and-role.html">here</a>
-to add a trust policy to the IAM role which grants the necessary permissions for Terraform.
-Please note that if you have installed the controller following the README, then the <code>namespace:serviceaccountname</code>
-will be <code>flux-system:tf-runner</code>. You'll obtain a Role ARN to use in the next step.</p>
-<p>Finally, annotate the ServiceAccount for the <code>tf-runner</code> with the obtained Role ARN in your cluster:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>annotate<span class="w"> </span>-n<span class="w"> </span>flux-system<span class="w"> </span>serviceaccount<span class="w"> </span>tf-runner<span class="w"> </span>eks.amazonaws.com/role-arn<span class="o">=</span>ROLE_ARN
-</code></pre></div>
-<p>If deploying the <code>tf-controller</code> via Helm, this can be accomplished as follows:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">values</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">runner</span><span class="p">:</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">serviceAccount</span><span class="p">:</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">      </span><span class="nt">annotations</span><span class="p">:</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="hll"><span class="w">        </span><span class="nt">eks.amazonaws.com/role-arn</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ROLE_ARN</span>
-</span></code></pre></div>
+<h1 id="using-cross-namespace-references">Using cross-namespace references</h1>
+<p>The Terraform CRD in the API for TF-controller includes fields which are references to other objects:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.spec.sourceRef</td>
+<td>Refers to a Flux source</td>
+</tr>
+<tr>
+<td>.spec.dependsOn[*]</td>
+<td>Each entry refers to a dependency</td>
+</tr>
+<tr>
+<td>.spec.cliConfigSecretRef</td>
+<td>Secret with <code>tf</code> config to use</td>
+</tr>
+</tbody>
+</table>
+<p>The branch planner configuration can also have cross-namespace references:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.secretNamespace</td>
+<td>Namespace of secret containing a GitHub token</td>
+</tr>
+<tr>
+<td>.resources[*]</td>
+<td>Each entry refers to a Terraform object to include in branch planning</td>
+</tr>
+</tbody>
+</table>
+<p>All of these can refer to an object in a namespace different to that of the Terraform object. However, giving access to objects in other namespaces is generally considered a security risk, so this is disallowed by default. Only references that mention the same namespace, or omit the namespace field, will be accepted. References using a different namespace will cause the controller to stop processing the Terraform object and put it in a non-Ready state.</p>
+<p>To <strong>allow</strong> cross-namespace references, use the flag <code>--allow-cross-namespace-refs</code> with the controller and branch-planner. When using the Helm chart to install or update the controller and branch-planner, the value <code>allowCrossNamespaceRefs</code> will allow cross-namespace references for both.</p>
 
 
 
